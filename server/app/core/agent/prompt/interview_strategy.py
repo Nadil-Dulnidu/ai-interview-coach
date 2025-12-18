@@ -14,6 +14,7 @@ Validations and defaults:
 - Normalize casing, deduplicate technology_stack and focus_areas.
 - If technology_stack is empty/unknown, bias to role fundamentals.
 - Keep plan realistic for typical 45–75 min interviews.
+- Stick with at least 10 number of overall questions.
 
 Planning logic:
 - Map difficulty by experience:

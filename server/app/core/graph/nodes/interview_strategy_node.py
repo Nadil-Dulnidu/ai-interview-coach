@@ -1,7 +1,7 @@
 from app.core.graph.nodes.base_node import BaseNode
 from app.exceptions.graph_exceptions import AgentInvocationError
 from app.core.graph.state import InterviewCoachState
-from langchain.messages import HumanMessage
+from langchain_core.messages import HumanMessage
 
 from typing import Any, Dict
 
@@ -17,6 +17,7 @@ class InterviewStrategyNode(BaseNode):
     """
 
     def __init__(self, agent):
+        super().__init__("InterviewStrategyNode")
         self.agent = agent
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
@@ -29,7 +30,7 @@ class InterviewStrategyNode(BaseNode):
             requirements = state["requirements"]
 
             messages = HumanMessage(
-                content="Here are the requirements: " + requirements.model_dump_json()
+                content=f"Here are the requirements: {requirements}"
             )
 
             response = self.agent.invoke({"messages": [messages]})

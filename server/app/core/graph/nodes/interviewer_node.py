@@ -19,13 +19,14 @@ class InterviewerNode(BaseNode):
         self._log_start()
 
         try:
-            user_requirements = state["requirements"]
-            interview_strategy = state["interview_strategy"]
+            interview_questions = state["interview_questions"]
 
             message = HumanMessage(
-                content=f"User Requirements: {user_requirements}\nInterview Strategy: {interview_strategy}"
+                content=f"Here are the interview questions: {interview_questions}"
             )
             response = self.agent.invoke({"messages": [message]})
+
+            print(f"=====Interviewer Agent response========: {response}")
 
             if not response:
                 self.logger.error("Empty response from agent")
@@ -34,7 +35,7 @@ class InterviewerNode(BaseNode):
             structured_response = response["structured_response"]
 
             # Check if we need more information
-            if structured_response.progress.current_question != "":
+            if structured_response.current_question != "":
                 result = self._create_incomplete_state(state, structured_response)
                 self._log_end("askinging current question")
                 return result
@@ -54,7 +55,7 @@ class InterviewerNode(BaseNode):
     ) -> Dict[str, Any]:
         return {
             "interviewer_completed": False,
-            "intruption_interview_question": structured_response.progress.current_question,
+            "intruption_interview_question": structured_response.current_question,
         }
 
     def _create_complete_state(

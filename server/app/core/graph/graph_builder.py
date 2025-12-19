@@ -19,6 +19,7 @@ from app.core.graph.nodes import (
     InterviewStrategyNode,
     ContinueInterviewNode,
     InterviewerNode,
+    QuestionMakerNode,
 )
 
 
@@ -45,6 +46,7 @@ class InterviewCoachGraphBuilder:
         self,
         req_gathering_agent,
         interview_strategy_agent,
+        question_maker_agent,
         interviewer_agent,
         checkpointer: Optional[BaseCheckpointSaver] = None,
     ):
@@ -64,6 +66,7 @@ class InterviewCoachGraphBuilder:
             "req_gathering": RequirementGatheringNode(req_gathering_agent),
             "ask_more_info": AskMoreInfoNode(),
             "interview_strategy": InterviewStrategyNode(interview_strategy_agent),
+            "question_maker": QuestionMakerNode(question_maker_agent),
             "interviewer": InterviewerNode(interviewer_agent),
             "continue_interview": ContinueInterviewNode(),
         }
@@ -100,8 +103,11 @@ class InterviewCoachGraphBuilder:
         # Loop back from ask_more_info to requirement gathering
         self.state_graph.add_edge("ask_more_info", "req_gathering")
 
-        # Add edge from interview_strategy to END
-        self.state_graph.add_edge("interview_strategy", "interviewer")
+        # Add edge from interview_strategy to question_maker
+        self.state_graph.add_edge("interview_strategy", "question_maker")
+
+        # Add edge from question_maker to interviewer
+        self.state_graph.add_edge("question_maker", "interviewer")
 
         self.state_graph.add_conditional_edges(
             "interviewer",

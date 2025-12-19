@@ -13,7 +13,8 @@ class InterviewCoachState(MessagesState):
         requirements_completed (bool): Whether the requirements have been completed.
         intruption_question (str): The question that was interrupted.
         interview_strategy (InterviewStrategy | None): The interview strategy.
-        interview_context (InterviewerModel | None): The interview context.
+        interview_questions (QuestionSet | None): The interview questions.
+        interview_output (InterviewerModel | None): The interview output.
         is_interview_completed (bool): Whether the interview has been completed.
         intruption_interview_question (str): The question that was interrupted.
     """
@@ -21,7 +22,11 @@ class InterviewCoachState(MessagesState):
     requirements: ReqGathringModel | None = None
     requirements_completed: bool = False
     intruption_question: str = ""
+
     interview_strategy: InterviewStrategy | None = None
-    interview_context: InterviewerModel | None = None
+
+    interview_questions: QuestionSet | None = None
+
+    interview_output: InterviewerModel | None = None
     is_interview_completed: bool = False
     intruption_interview_question: str = ""

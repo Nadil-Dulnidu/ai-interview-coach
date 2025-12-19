@@ -11,9 +11,11 @@ from app.core.graph.nodes.ask_more_info_node import AskMoreInfoNode
 from app.core.graph.nodes.interview_strategy_node import InterviewStrategyNode
 from app.core.graph.nodes.continue_interview_node import ContinueInterviewNode
 from app.core.graph.nodes.interviewer_node import InterviewerNode
+from app.core.graph.nodes.question_maker_node import QuestionMakerNode
 
 __all__ = [
     "BaseNode",
+    "QuestionMakerNode",
     "RequirementGatheringNode",
     "AskMoreInfoNode",
     "InterviewStrategyNode",

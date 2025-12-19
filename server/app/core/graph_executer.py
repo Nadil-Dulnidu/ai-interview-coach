@@ -201,12 +201,19 @@ if __name__ == "__main__":
 
                         print(json.dumps(interview_strategy, indent=2))
 
-                    interview_context = last_state.get("interview_context")
-                    if interview_context:
+                    interview_questions = last_state.get("interview_questions")
+                    if interview_questions:
+                        print("\n✓ Interview Questions generated:")
+                        import json
+
+                        print(json.dumps(interview_questions, indent=2))
+
+                    interview_output = last_state.get("interview_output")
+                    if interview_output:
                         print("\n✓ Interviewer generated:")
                         import json
 
-                        print(json.dumps(interview_context, indent=2))
+                        print(json.dumps(interview_output, indent=2))
 
                     print("\n🎉 Your interview preparation is complete!")
 

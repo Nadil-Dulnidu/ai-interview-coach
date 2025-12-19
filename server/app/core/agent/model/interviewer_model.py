@@ -17,7 +17,19 @@ class InterviewerModel(BaseModel):
     Interviewer model for the interview
     """
 
-    user_response: List[UserResponse] = Field(..., description="User response")
-    current_question: str = Field(
-        ..., description="Current question want to ask from candidate"
+    is_candidate_ready: bool = Field(
+        ..., description="Is the candidate ready to face the interview"
+    )
+
+    user_responses: List[UserResponse] = Field(
+        ..., description="User responses for each question"
+    )
+
+    missing_user_answer_questions: List[str] = Field(
+        ...,
+        description="The questions that the user has not answered yet",
+    )
+    question: str = Field(
+        ...,
+        description="The question that requires a response from the user",
     )

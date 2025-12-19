@@ -2,6 +2,7 @@ from langgraph.graph import MessagesState
 from app.core.agent.model.req_gathring_model import ReqGathringModel
 from app.core.agent.model.interviewer_model import InterviewerModel
 from app.core.agent.model.interview_strategy_model import InterviewStrategy
+from app.core.agent.model.question_maker_model import QuestionSet
 
 
 class InterviewCoachState(MessagesState):

@@ -21,12 +21,15 @@ class InterviewerNode(BaseNode):
         try:
             interview_questions = state["interview_questions"]
 
-            message = HumanMessage(
-                content=f"Here are the interview questions: {interview_questions}"
-            )
-            response = self.agent.invoke({"messages": [message]})
+            messages = [
+                HumanMessage(
+                    content=f"Here are the interview questions: {interview_questions}"
+                )
+            ] + state["messages"]
 
-            print(f"=====Interviewer Agent response========: {response}")
+            response = self.agent.invoke({"messages": messages})
+
+            print(f"=====Interviewer Agent response========: {response["messages"]}")
 
             if not response:
                 self.logger.error("Empty response from agent")
@@ -34,8 +37,15 @@ class InterviewerNode(BaseNode):
 
             structured_response = response["structured_response"]
 
+            print(
+                f"=====Interviewer Agent structured response========: {structured_response}"
+            )
+
             # Check if we need more information
-            if structured_response.current_question != "":
+            if (
+                structured_response.question != ""
+                and structured_response.missing_user_answer_questions != []
+            ):
                 result = self._create_incomplete_state(state, structured_response)
                 self._log_end("askinging current question")
                 return result
@@ -54,15 +64,15 @@ class InterviewerNode(BaseNode):
         self, state: InterviewCoachState, structured_response: Any
     ) -> Dict[str, Any]:
         return {
-            "interviewer_completed": False,
-            "intruption_interview_question": structured_response.current_question,
+            "is_interview_completed": False,
+            "intruption_interview_question": structured_response.question,
         }
 
     def _create_complete_state(
         self, state: InterviewCoachState, structured_response: Any
     ) -> Dict[str, Any]:
         return {
-            "interviewer": structured_response.model_dump(),
-            "interviewer_completed": True,
+            "interview_output": structured_response.model_dump(),
+            "is_interview_completed": True,
             "intruption_interview_question": "",
         }

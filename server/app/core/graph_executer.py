@@ -19,6 +19,7 @@ from app.core.agent.agents import (
     get_interview_strategist_agent,
     get_interviewer_agent,
     get_question_maker_agent,
+    get_evaluation_agent,
 )
 from app.core.graph.state import InterviewCoachState
 from app.core.graph import InterviewCoachGraphBuilder
@@ -52,6 +53,7 @@ def create_interview_coach_graph(checkpointer=None):
     interview_strategy_agent = get_interview_strategist_agent()
     interviewer_agent = get_interviewer_agent()
     question_maker_agent = get_question_maker_agent()
+    evaluation_agent = get_evaluation_agent()
     checkpointer = checkpointer or InMemorySaver()
 
     # Build the graph
@@ -60,6 +62,7 @@ def create_interview_coach_graph(checkpointer=None):
         interview_strategy_agent=interview_strategy_agent,
         question_maker_agent=question_maker_agent,
         interviewer_agent=interviewer_agent,
+        evaluation_agent=evaluation_agent,
         checkpointer=checkpointer,
     )
 

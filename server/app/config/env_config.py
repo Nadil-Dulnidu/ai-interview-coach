@@ -7,9 +7,14 @@ class Settings(BaseSettings):
     # OpenAI Configuration
     OPENAI_API_KEY: str
     OPENAI_MODEL_NAME: str
+    OPENAI_MODEL_TEMP: float
+    OPENAI_REASONING_MODEL_NAME: str
+    OPENAI_REASONING_MODEL_TEMP: float
+
     # Google gen AI Configuration
     GOOGLE_GENAI_API_KEY: str
     GOOGLE_GENAI_MODEL_NAME: str
+    GOOGLE_GENAI_MODEL_TEMP: float
 
     model_config = SettingsConfigDict(
         env_file=".env",

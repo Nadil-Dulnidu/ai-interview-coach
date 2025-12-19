@@ -80,6 +80,9 @@ class GenAIModelManager:
         if not self._settings.GOOGLE_GENAI_MODEL_NAME:
             raise LLMConfigurationError("GOOGLE_GENAI_MODEL_NAME is not set")
 
+        if not self._settings.GOOGLE_GENAI_MODEL_TEMP:
+            raise LLMConfigurationError("GOOGLE_GENAI_MODEL_TEMPERATURE is not set")
+
         # Validate API key format (basic check for Google AI)
         if len(self._settings.GOOGLE_GENAI_API_KEY) < 10:
             logger.warning("GOOGLE_GENAI_API_KEY seems too short - may be invalid")
@@ -90,7 +93,7 @@ class GenAIModelManager:
 
     def get_model(
         self,
-        temperature: float = 0.7,
+        temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         streaming: bool = False,
     ) -> ChatGoogleGenerativeAI:
@@ -193,7 +196,7 @@ _manager = GenAIModelManager()
 
 # Public API - Backward compatible
 def get_genai_model(
-    temperature: float = 0.7,
+    temperature: _manager._settings.GOOGLE_GENAI_MODEL_TEMP,
     max_tokens: Optional[int] = None,
     streaming: bool = False,
 ) -> ChatGoogleGenerativeAI:
@@ -246,7 +249,7 @@ def get_genai_model_info() -> dict:
 # Convenience function for generating responses
 def generate_genai_response(
     prompt: str,
-    temperature: float = 0.7,
+    temperature: _manager._settings.GOOGLE_GENAI_MODEL_TEMP,
     max_tokens: Optional[int] = None,
 ) -> str:
     """

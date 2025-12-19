@@ -20,6 +20,7 @@ from app.core.graph.nodes import (
     ContinueInterviewNode,
     InterviewerNode,
     QuestionMakerNode,
+    EvaluationNode,
 )
 
 
@@ -48,6 +49,7 @@ class InterviewCoachGraphBuilder:
         interview_strategy_agent,
         question_maker_agent,
         interviewer_agent,
+        evaluation_agent,
         checkpointer: Optional[BaseCheckpointSaver] = None,
     ):
         """
@@ -69,6 +71,7 @@ class InterviewCoachGraphBuilder:
             "question_maker": QuestionMakerNode(question_maker_agent),
             "interviewer": InterviewerNode(interviewer_agent),
             "continue_interview": ContinueInterviewNode(),
+            "evaluation": EvaluationNode(evaluation_agent),
         }
 
         logger.info(
@@ -114,11 +117,13 @@ class InterviewCoachGraphBuilder:
             self._should_continue_interview,
             {
                 True: "continue_interview",  # More info needed
-                False: END,  # Requirements complete
+                False: "evaluation",  # Requirements complete
             },
         )
 
         self.state_graph.add_edge("continue_interview", "interviewer")
+
+        self.state_graph.add_edge("evaluation", END)
 
         logger.debug("Graph edges configured")
 

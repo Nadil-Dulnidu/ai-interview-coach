@@ -23,14 +23,17 @@ from pydantic import BaseModel
 
 from app.core.llm.openai_llm import get_openai_model
 from app.core.llm.genai_llm import get_genai_model
+from app.core.llm.openai_resoning_llm import get_openai_reasoning_model
 from app.core.agent.model.req_gathring_model import ReqGathringModel
 from app.core.agent.prompt.req_gathering import REQ_GATHERING_PROMPT
 from app.core.agent.prompt.interview_strategy import INTERVIEW_STRATEGY_PROMPT
 from app.core.agent.prompt.interviewer import INTERVIEWER_PROMPT
 from app.core.agent.prompt.question_maker import QUESTION_MAKER_PROMPT
+from app.core.agent.prompt.evaluation import EVALUATION_PROMPT
 from app.core.agent.model.interviewer_model import InterviewerModel
 from app.core.agent.model.interview_strategy_model import InterviewStrategy
 from app.core.agent.model.question_maker_model import QuestionSet
+from app.core.agent.model.evalutaion_model import InterviewEvaluation
 from app.core.agent.tools import web_search_tool
 from app.exceptions.agents_exceptions import (
     AgentInitializationError,
@@ -163,8 +166,10 @@ class AgentManager:
                 self._interview_strategist_agent = None
                 self._interviewer_agent = None
                 self._question_maker_agent = None
+                self._evaluation_agent = None
                 self._openai_model = None
                 self._genai_model = None
+                self._openai_reasoning_model = None
                 self._initialized = True
                 logger.info("AgentManager initialized")
 
@@ -199,6 +204,24 @@ class AgentManager:
                             f"Failed to initialize GenAI model: {str(e)}"
                         ) from e
         return self._genai_model
+
+    def _get_openai_reasoning_model(self) -> ChatOpenAI:
+        """Lazy-load OpenAI reasoning model with error handling."""
+        if self._openai_reasoning_model is None:
+            with self._lock:
+                if self._openai_reasoning_model is None:
+                    try:
+                        logger.info("Initializing OpenAI reasoning model")
+                        self._openai_reasoning_model = get_openai_reasoning_model()
+                        logger.info("OpenAI reasoning model initialized successfully")
+                    except Exception as e:
+                        logger.error(
+                            f"Failed to initialize OpenAI reasoning model: {str(e)}"
+                        )
+                        raise AgentInitializationError(
+                            f"Failed to initialize OpenAI reasoning model: {str(e)}"
+                        ) from e
+        return self._openai_reasoning_model
 
     def get_req_gathering_agent(self):
         """
@@ -316,6 +339,34 @@ class AgentManager:
                         raise
         return self._interviewer_agent
 
+    def get_evaluation_agent(self):
+        """
+        Get or create the evaluation agent (singleton).
+
+        Returns:
+            Configured evaluation agent
+
+        Raises:
+            AgentInitializationError: If agent creation fails
+        """
+        if self._evaluation_agent is None:
+            with self._lock:
+                if self._evaluation_agent is None:
+                    try:
+                        logger.info("Creating evaluation agent")
+                        self._evaluation_agent = Agent(
+                            model=self._get_openai_reasoning_model(),
+                            name="evaluation_agent",
+                            tools=[],
+                            prompt=EVALUATION_PROMPT,
+                            response_format=InterviewEvaluation,
+                        ).create_agent()
+                        logger.info("Evaluation agent created successfully")
+                    except Exception as e:
+                        logger.error(f"Failed to create evaluation agent: {str(e)}")
+                        raise
+        return self._evaluation_agent
+
     def reset(self) -> None:
         """
         Reset all agents (useful for testing or reinitialization).
@@ -327,6 +378,8 @@ class AgentManager:
             self._req_gathering_agent = None
             self._interview_strategist_agent = None
             self._interviewer_agent = None
+            self._evaluation_agent = None
+            self._question_maker_agent = None
             self._openai_model = None
             self._genai_model = None
             logger.info("All agents reset successfully")
@@ -375,6 +428,16 @@ def get_interviewer_agent():
         Configured interviewer agent
     """
     return _manager.get_interviewer_agent()
+
+
+def get_evaluation_agent():
+    """
+    Get the evaluation agent singleton.
+
+    Returns:
+        Configured evaluation agent
+    """
+    return _manager.get_evaluation_agent()
 
 
 def reset_agents() -> None:

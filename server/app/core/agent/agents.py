@@ -26,7 +26,10 @@ from app.core.llm.genai_llm import get_genai_model
 from app.core.agent.model.req_gathring_model import ReqGathringModel
 from app.core.agent.prompt.req_gathering import REQ_GATHERING_PROMPT
 from app.core.agent.prompt.interview_strategy import INTERVIEW_STRATEGY_PROMPT
+from app.core.agent.prompt.interviewer import INTERVIEWER_PROMPT
+from app.core.agent.model.interviewer_model import InterviewerModel
 from app.core.agent.model.interview_strategy_model import InterviewStrategy
+from app.core.agent.tools import web_search_tool
 from app.exceptions.agents_exceptions import (
     AgentInitializationError,
     AgentConfigurationError,
@@ -156,6 +159,7 @@ class AgentManager:
             if not self._initialized:
                 self._req_gathering_agent = None
                 self._interview_strategist_agent = None
+                self._interviewer_agent = None
                 self._openai_model = None
                 self._genai_model = None
                 self._initialized = True
@@ -241,7 +245,7 @@ class AgentManager:
                         self._interview_strategist_agent = Agent(
                             model=self._get_genai_model(),
                             name="interview_strategist_agent",
-                            tools=[],
+                            tools=[web_search_tool],
                             prompt=INTERVIEW_STRATEGY_PROMPT,
                             response_format=InterviewStrategy,
                         ).create_agent()
@@ -252,6 +256,34 @@ class AgentManager:
                         )
                         raise
         return self._interview_strategist_agent
+
+    def get_interviewer_agent(self):
+        """
+        Get or create the interviewer agent (singleton).
+
+        Returns:
+            Configured interviewer agent
+
+        Raises:
+            AgentInitializationError: If agent creation fails
+        """
+        if self._interviewer_agent is None:
+            with self._lock:
+                if self._interviewer_agent is None:
+                    try:
+                        logger.info("Creating interviewer agent")
+                        self._interviewer_agent = Agent(
+                            model=self._get_genai_model(),
+                            name="interviewer_agent",
+                            tools=[],
+                            prompt=INTERVIEWER_PROMPT,
+                            response_format=InterviewerModel,
+                        ).create_agent()
+                        logger.info("Interviewer agent created successfully")
+                    except Exception as e:
+                        logger.error(f"Failed to create interviewer agent: {str(e)}")
+                        raise
+        return self._interviewer_agent
 
     def reset(self) -> None:
         """
@@ -293,6 +325,16 @@ def get_interview_strategist_agent():
     return _manager.get_interview_strategist_agent()
 
 
+def get_interviewer_agent():
+    """
+    Get the interviewer agent singleton.
+
+    Returns:
+        Configured interviewer agent
+    """
+    return _manager.get_interviewer_agent()
+
+
 def reset_agents() -> None:
     """
     Reset all agents. Useful for testing or forcing reinitialization.
@@ -300,21 +342,21 @@ def reset_agents() -> None:
     _manager.reset()
 
 
-if __name__ == "__main__":
-    # Example usage with proper error handling
-    try:
-        agent = get_req_gathering_agent()
-        response = agent.invoke(
-            {
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": "I want to apply for a job as a software engineer",
-                    }
-                ]
-            }
-        )
-        print(response["messages"])
-    except Exception as e:
-        logger.error(f"Failed to run agent: {str(e)}")
-        raise
+# if __name__ == "__main__":
+#     # Example usage with proper error handling
+#     try:
+#         agent = get_req_gathering_agent()
+#         response = agent.invoke(
+#             {
+#                 "messages": [
+#                     {
+#                         "role": "user",
+#                         "content": "I want to apply for a job as a software engineer",
+#                     }
+#                 ]
+#             }
+#         )
+#         print(response["messages"])
+#     except Exception as e:
+#         logger.error(f"Failed to run agent: {str(e)}")
+#         raise

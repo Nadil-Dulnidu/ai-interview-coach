@@ -17,6 +17,8 @@ from app.core.graph.nodes import (
     RequirementGatheringNode,
     AskMoreInfoNode,
     InterviewStrategyNode,
+    ContinueInterviewNode,
+    InterviewerNode,
 )
 
 
@@ -43,6 +45,7 @@ class InterviewCoachGraphBuilder:
         self,
         req_gathering_agent,
         interview_strategy_agent,
+        interviewer_agent,
         checkpointer: Optional[BaseCheckpointSaver] = None,
     ):
         """
@@ -61,6 +64,8 @@ class InterviewCoachGraphBuilder:
             "req_gathering": RequirementGatheringNode(req_gathering_agent),
             "ask_more_info": AskMoreInfoNode(),
             "interview_strategy": InterviewStrategyNode(interview_strategy_agent),
+            "interviewer": InterviewerNode(interviewer_agent),
+            "continue_interview": ContinueInterviewNode(),
         }
 
         logger.info(
@@ -78,10 +83,6 @@ class InterviewCoachGraphBuilder:
         """
         Define edges and transitions between nodes.
 
-        Graph flow:
-        START -> req_gathering -> [conditional]
-            - If requirements_completed == False: ask_more_info -> req_gathering
-            - If requirements_completed == True: END
         """
         # Start with requirement gathering
         self.state_graph.add_edge(START, "req_gathering")
@@ -100,7 +101,18 @@ class InterviewCoachGraphBuilder:
         self.state_graph.add_edge("ask_more_info", "req_gathering")
 
         # Add edge from interview_strategy to END
-        self.state_graph.add_edge("interview_strategy", END)
+        self.state_graph.add_edge("interview_strategy", "interviewer")
+
+        self.state_graph.add_conditional_edges(
+            "interviewer",
+            self._should_continue_interview,
+            {
+                True: "continue_interview",  # More info needed
+                False: END,  # Requirements complete
+            },
+        )
+
+        self.state_graph.add_edge("continue_interview", "interviewer")
 
         logger.debug("Graph edges configured")
 
@@ -118,6 +130,22 @@ class InterviewCoachGraphBuilder:
         """
         needs_more_info = not state.get("requirements_completed", False)
         logger.debug(f"Should ask more info: {needs_more_info}")
+        return needs_more_info
+
+    def _should_continue_interview(self, state: InterviewCoachState) -> bool:
+        """
+        Determine if we need to continue the interview.
+
+        This is a routing function used in conditional edges.
+
+        Args:
+            state: Current state of the workflow.
+
+        Returns:
+            True if more information is needed, False otherwise.
+        """
+        needs_more_info = not state.get("is_interview_completed", False)
+        logger.debug(f"Should continue interview: {needs_more_info}")
         return needs_more_info
 
     def build(self) -> StateGraph:

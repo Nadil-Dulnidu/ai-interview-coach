@@ -1,6 +1,7 @@
 from app.core.graph.state import InterviewCoachState
 from app.core.graph.nodes.base_node import BaseNode
 from langchain_core.messages import HumanMessage
+from typing import Any
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 

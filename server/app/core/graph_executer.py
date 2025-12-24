@@ -218,6 +218,13 @@ if __name__ == "__main__":
 
                         print(json.dumps(interview_output, indent=2))
 
+                    interview_evaluation = last_state.get("interview_evaluation")
+                    if interview_evaluation:
+                        print("\n✓ Interview Evaluation generated:")
+                        import json
+
+                        print(json.dumps(interview_evaluation, indent=2))
+
                     print("\n🎉 Your interview preparation is complete!")
 
                 break

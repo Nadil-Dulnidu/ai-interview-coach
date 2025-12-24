@@ -80,9 +80,6 @@ class GenAIModelManager:
         if not self._settings.GOOGLE_GENAI_MODEL_NAME:
             raise LLMConfigurationError("GOOGLE_GENAI_MODEL_NAME is not set")
 
-        if not self._settings.GOOGLE_GENAI_MODEL_TEMP:
-            raise LLMConfigurationError("GOOGLE_GENAI_MODEL_TEMPERATURE is not set")
-
         # Validate API key format (basic check for Google AI)
         if len(self._settings.GOOGLE_GENAI_API_KEY) < 10:
             logger.warning("GOOGLE_GENAI_API_KEY seems too short - may be invalid")
@@ -93,7 +90,6 @@ class GenAIModelManager:
 
     def get_model(
         self,
-        temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         streaming: bool = False,
     ) -> ChatGoogleGenerativeAI:
@@ -115,6 +111,8 @@ class GenAIModelManager:
             LLMConfigurationError: If configuration is invalid
             LLMInitializationError: If model creation fails
         """
+        settings = self._get_settings()
+        temperature: float = settings.GOOGLE_GENAI_MODEL_TEMP or 0.0
         # Validate temperature
         if not 0.0 <= temperature <= 2.0:
             raise LLMConfigurationError(
@@ -128,7 +126,6 @@ class GenAIModelManager:
             with self._lock:
                 if cache_key not in self._models:
                     try:
-                        settings = self._get_settings()
                         logger.info(
                             f"Creating Google GenAI model (temp={temperature}, "
                             f"max_tokens={max_tokens}, streaming={streaming})"
@@ -196,9 +193,8 @@ _manager = GenAIModelManager()
 
 # Public API - Backward compatible
 def get_genai_model(
-    temperature: _manager._settings.GOOGLE_GENAI_MODEL_TEMP,
     max_tokens: Optional[int] = None,
-    streaming: bool = False,
+    streaming: bool = True,
 ) -> ChatGoogleGenerativeAI:
     """
     Get a Google GenAI model instance (singleton per configuration).
@@ -222,9 +218,7 @@ def get_genai_model(
         >>> model = get_genai_model(temperature=0.7)
         >>> response = model.invoke("Hello, how are you?")
     """
-    return _manager.get_model(
-        temperature=temperature, max_tokens=max_tokens, streaming=streaming
-    )
+    return _manager.get_model(max_tokens=max_tokens, streaming=streaming)
 
 
 def reset_genai_models() -> None:
@@ -249,7 +243,6 @@ def get_genai_model_info() -> dict:
 # Convenience function for generating responses
 def generate_genai_response(
     prompt: str,
-    temperature: _manager._settings.GOOGLE_GENAI_MODEL_TEMP,
     max_tokens: Optional[int] = None,
 ) -> str:
     """
@@ -270,7 +263,7 @@ def generate_genai_response(
         LLMInitializationError: If model creation fails
     """
     try:
-        model = get_genai_model(temperature=temperature, max_tokens=max_tokens)
+        model = get_genai_model(max_tokens=max_tokens)
         logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         response = model.invoke(prompt)
         logger.debug("Response generated successfully")

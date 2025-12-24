@@ -81,9 +81,6 @@ class OpenAIModelManager:
         if not self._settings.OPENAI_MODEL_NAME:
             raise LLMConfigurationError("OPENAI_MODEL_NAME is not set")
 
-        if not self._settings.OPENAI_MODEL_TEMPERATURE:
-            raise LLMConfigurationError("OPENAI_MODEL_TEMPERATURE is not set")
-
         # Validate API key format (basic check)
         if not self._settings.OPENAI_API_KEY.startswith("sk-"):
             logger.warning("OPENAI_API_KEY does not start with 'sk-' - may be invalid")
@@ -92,9 +89,8 @@ class OpenAIModelManager:
 
     def get_model(
         self,
-        temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
-        streaming: bool = False,
+        streaming: bool = True,
     ) -> ChatOpenAI:
         """
         Get or create an OpenAI model instance.
@@ -114,6 +110,9 @@ class OpenAIModelManager:
             LLMConfigurationError: If configuration is invalid
             LLMInitializationError: If model creation fails
         """
+        settings = self._get_settings()
+        temperature: float = settings.OPENAI_MODEL_TEMP or 0.0
+
         # Validate temperature
         if not 0.0 <= temperature <= 2.0:
             raise LLMConfigurationError(
@@ -127,7 +126,6 @@ class OpenAIModelManager:
             with self._lock:
                 if cache_key not in self._models:
                     try:
-                        settings = self._get_settings()
                         logger.info(
                             f"Creating OpenAI model (temp={temperature}, "
                             f"max_tokens={max_tokens}, streaming={streaming})"
@@ -195,9 +193,8 @@ _manager = OpenAIModelManager()
 
 # Public API - Backward compatible
 def get_openai_model(
-    temperature: _manager._settings.OPENAI_MODEL_TEMP,
     max_tokens: Optional[int] = None,
-    streaming: bool = False,
+    streaming: bool = True,
 ) -> ChatOpenAI:
     """
     Get an OpenAI model instance (singleton per configuration).
@@ -221,9 +218,7 @@ def get_openai_model(
         >>> model = get_openai_model(temperature=0.7)
         >>> response = model.invoke("Hello, how are you?")
     """
-    return _manager.get_model(
-        temperature=temperature, max_tokens=max_tokens, streaming=streaming
-    )
+    return _manager.get_model(max_tokens=max_tokens, streaming=streaming)
 
 
 def reset_openai_models() -> None:
@@ -248,7 +243,6 @@ def get_openai_model_info() -> dict:
 # Convenience function for generating responses
 def generate_openai_response(
     prompt: str,
-    temperature: _manager._settings.OPENAI_MODEL_TEMP,
     max_tokens: Optional[int] = None,
 ) -> str:
     """
@@ -269,7 +263,7 @@ def generate_openai_response(
         LLMInitializationError: If model creation fails
     """
     try:
-        model = get_openai_model(temperature=temperature, max_tokens=max_tokens)
+        model = get_openai_model(max_tokens=max_tokens)
         logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         response = model.invoke(prompt)
         logger.debug("Response generated successfully")
@@ -279,24 +273,24 @@ def generate_openai_response(
         raise
 
 
-if __name__ == "__main__":
-    # Example usage with error handling
-    try:
-        # Get model with default temperature
-        model = get_openai_model(temperature=0.0)
-        print(f"Model created: {model}")
+# if __name__ == "__main__":
+#     # Example usage with error handling
+#     try:
+#         # Get model with default temperature
+#         model = get_openai_model(temperature=0.0)
+#         print(f"Model created: {model}")
 
-        # Generate a response
-        response = generate_openai_response("Hello, how are you?", temperature=0.7)
-        print(f"Response: {response}")
+#         # Generate a response
+#         response = generate_openai_response("Hello, how are you?", temperature=0.7)
+#         print(f"Response: {response}")
 
-        # Check model info
-        info = get_openai_model_info()
-        print(f"Model info: {info}")
+#         # Check model info
+#         info = get_openai_model_info()
+#         print(f"Model info: {info}")
 
-    except LLMConfigurationError as e:
-        logger.error(f"Configuration error: {e}")
-    except LLMInitializationError as e:
-        logger.error(f"Initialization error: {e}")
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+#     except LLMConfigurationError as e:
+#         logger.error(f"Configuration error: {e}")
+#     except LLMInitializationError as e:
+#         logger.error(f"Initialization error: {e}")
+#     except Exception as e:
+#         logger.error(f"Unexpected error: {e}")

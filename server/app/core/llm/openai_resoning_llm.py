@@ -81,9 +81,6 @@ class OpenAIReasoningModelManager:
         if not self._settings.OPENAI_REASONING_MODEL_NAME:
             raise LLMConfigurationError("OPENAI_REASONING_MODEL_NAME is not set")
 
-        if not self._settings.OPENAI_REASONING_MODEL_TEMP:
-            raise LLMConfigurationError("OPENAI_REASONING_MODEL_TEMP is not set")
-
         # Validate API key format (basic check)
         if not self._settings.OPENAI_API_KEY.startswith("sk-"):
             logger.warning("OPENAI_API_KEY does not start with 'sk-' - may be invalid")
@@ -94,7 +91,6 @@ class OpenAIReasoningModelManager:
 
     def get_model(
         self,
-        temperature: float = 0.0,
         max_tokens: Optional[int] = None,
         streaming: bool = False,
     ) -> ChatOpenAI:
@@ -116,6 +112,8 @@ class OpenAIReasoningModelManager:
             LLMConfigurationError: If configuration is invalid
             LLMInitializationError: If model creation fails
         """
+        settings = self._get_settings()
+        temperature: float = settings.OPENAI_REASONING_MODEL_TEMP or 0.0
         # Validate temperature
         if not 0.0 <= temperature <= 2.0:
             raise LLMConfigurationError(
@@ -129,7 +127,6 @@ class OpenAIReasoningModelManager:
             with self._lock:
                 if cache_key not in self._models:
                     try:
-                        settings = self._get_settings()
                         logger.info(
                             f"Creating OpenAI model (temp={temperature}, "
                             f"max_tokens={max_tokens}, streaming={streaming})"
@@ -192,12 +189,11 @@ class OpenAIReasoningModelManager:
 
 
 # Global manager instance
-_manager = OpenAIModelManager()
+_manager = OpenAIReasoningModelManager()
 
 
 # Public API - Backward compatible
 def get_openai_reasoning_model(
-    temperature: float = _manager._settings.OPENAI_REASONING_MODEL_TEMP,
     max_tokens: Optional[int] = None,
     streaming: bool = False,
 ) -> ChatOpenAI:
@@ -223,9 +219,7 @@ def get_openai_reasoning_model(
         >>> model = get_openai_reasoning_model(temperature=0.7)
         >>> response = model.invoke("Hello, how are you?")
     """
-    return _manager.get_model(
-        temperature=temperature, max_tokens=max_tokens, streaming=streaming
-    )
+    return _manager.get_model(max_tokens=max_tokens, streaming=streaming)
 
 
 def reset_openai_models() -> None:
@@ -250,7 +244,6 @@ def get_openai_model_info() -> dict:
 # Convenience function for generating responses
 def generate_openai_reasoning_response(
     prompt: str,
-    temperature: float = _manager._settings.OPENAI_REASONING_MODEL_TEMP,
     max_tokens: Optional[int] = None,
 ) -> str:
     """
@@ -271,9 +264,7 @@ def generate_openai_reasoning_response(
         LLMInitializationError: If model creation fails
     """
     try:
-        model = get_openai_reasoning_model(
-            temperature=temperature, max_tokens=max_tokens
-        )
+        model = get_openai_reasoning_model(max_tokens=max_tokens)
         logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         response = model.invoke(prompt)
         logger.debug("Response generated successfully")

@@ -1,7 +1,7 @@
 from app.core.graph.nodes.base_node import BaseNode
 from app.exceptions.graph_exceptions import AgentInvocationError
 from app.core.graph.state import InterviewCoachState
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 from typing import Any, Dict
 
@@ -72,6 +72,11 @@ class InterviewerNode(BaseNode):
         self, state: InterviewCoachState, structured_response: Any
     ) -> Dict[str, Any]:
         return {
+            "messages": [
+                AIMessage(
+                    content="Thank you for completing the interview. I have successfully gathered all the necessary information and will now proceed with the evaluation of your responses.\n\n"
+                )
+            ],
             "interview_output": structured_response.model_dump(),
             "is_interview_completed": True,
             "intruption_interview_question": "",

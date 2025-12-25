@@ -1,6 +1,6 @@
 from app.core.graph.state import InterviewCoachState
 from app.core.graph.nodes.base_node import BaseNode
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from typing import Any
 
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -36,6 +36,11 @@ class EvaluationNode(BaseNode):
             structured_response = response["structured_response"]
 
             result = {
+                "messages": [
+                    AIMessage(
+                        content="I have completed the evaluation of the interview output based on the provided requirements. The assessment includes a detailed analysis of the performance, highlighting key strengths and areas for improvement.\n\n"
+                    )
+                ],
                 "interview_evaluation": structured_response.model_dump(),
             }
 

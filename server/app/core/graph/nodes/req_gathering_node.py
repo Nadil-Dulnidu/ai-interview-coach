@@ -13,6 +13,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from app.core.graph.state import InterviewCoachState
 from app.core.graph.nodes.base_node import BaseNode
 from app.exceptions.graph_exceptions import AgentInvocationError
+from langchain_core.messages import AIMessage
 
 
 class RequirementGatheringNode(BaseNode):
@@ -116,7 +117,11 @@ class RequirementGatheringNode(BaseNode):
             State with complete requirements.
         """
         return {
-            "messages": state["messages"],
+            "messages": [
+                AIMessage(
+                    content="I have successfully gathered all the necessary information. We are now ready to proceed with your interview practice session."
+                )
+            ],
             "requirements": structured_response.model_dump(),
             "requirements_completed": True,
             "intruption_question": "",

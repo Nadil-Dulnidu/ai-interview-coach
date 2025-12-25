@@ -1,7 +1,7 @@
 from app.core.graph.nodes.base_node import BaseNode
 from app.exceptions.graph_exceptions import AgentInvocationError
 from app.core.graph.state import InterviewCoachState
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 from typing import Any, Dict
 
@@ -42,7 +42,11 @@ class InterviewStrategyNode(BaseNode):
             structured_response = response["structured_response"]
 
             result = {
-                "messages": state["messages"],
+                "messages": [
+                    AIMessage(
+                        content="I have analyzed the requirements and developed a tailored interview strategy to help you prepare effectively. Let's proceed with the next steps of our session.\n\n"
+                    )
+                ],
                 "interview_strategy": structured_response.model_dump(),
                 "requirements": state["requirements"],
                 "requirements_completed": state["requirements_completed"],

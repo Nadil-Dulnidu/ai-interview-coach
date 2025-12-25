@@ -1,7 +1,7 @@
 from app.core.graph.nodes.base_node import BaseNode
 from app.exceptions.graph_exceptions import AgentInvocationError
 from app.core.graph.state import InterviewCoachState
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 from typing import Any, Dict
 
@@ -39,6 +39,11 @@ class QuestionMakerNode(BaseNode):
             structured_response = response["structured_response"]
 
             result = {
+                "messages": [
+                    AIMessage(
+                        content="I have analyzed the requirements and strategy to generate a tailored set of interview questions. I'm ready to begin the interview when you are.\n\n"
+                    )
+                ],
                 "interview_questions": structured_response.model_dump(),
             }
 

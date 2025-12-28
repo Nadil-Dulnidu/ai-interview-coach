@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     # Postgres Configuration
     POSTGRES_URI: str
 
+    # Clerk Configuration
+    CLERK_JWKS_URL: str
+    CLERK_ISSUER: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -17,7 +17,8 @@ from langgraph.types import Command
 
 from app.core.agent.model.dynamic_prompt_model import Context
 from app.core.graph.state import InterviewCoachState
-from app.core.graph_executer import compiled_graph as interview_coach_graph
+from app.core.graph_executer import get_compiled_graph
+from app.core.util.postgres_checkpointer import get_postgres_checkpointer
 from app.util.vercel_adapter.langgraph_vercel_adapter import stream_langgraph_to_vercel
 
 
@@ -43,6 +44,9 @@ async def stream_interview_coach_chat(
     """
     config = {"configurable": {"thread_id": thread_id}}
 
+    checkpointer = await get_postgres_checkpointer()
+    interview_coach_graph = get_compiled_graph(checkpointer=checkpointer)
+
     if resume:
         # Resume execution with user input
         initial_state = Command(resume=message)
@@ -50,7 +54,7 @@ async def stream_interview_coach_chat(
         # Initial invocation
         initial_state = {
             "messages": [HumanMessage(content=message)],
-            "context" : context
+            "context": context,
         }
 
     # Stream using the pluggable adapter!
@@ -80,7 +84,9 @@ async def stream_interview_coach_with_custom_extractor(
         summary_field_extractor,
         default_message_extractor,
     )
-    from app.util.vercel_adapter.langgraph_vercel_adapter import LangGraphToVercelAdapter
+    from app.util.vercel_adapter.langgraph_vercel_adapter import (
+        LangGraphToVercelAdapter,
+    )
 
     # Create custom extractor chain
     # Try summary field first, fallback to messages

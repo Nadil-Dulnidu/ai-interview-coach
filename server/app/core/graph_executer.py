@@ -130,7 +130,7 @@ def get_compiled_graph(checkpointer=None):
 
 
 # Global compiled graph instance (for backward compatibility)
-compiled_graph = get_compiled_graph(checkpointer=InMemorySaver())
+compiled_graph = get_compiled_graph()
 
 
 if __name__ == "__main__":

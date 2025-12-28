@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     GOOGLE_GENAI_MODEL_NAME: str
     GOOGLE_GENAI_MODEL_TEMP: float
 
+    # Postgres Configuration
+    POSTGRES_URI: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

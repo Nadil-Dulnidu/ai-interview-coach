@@ -22,11 +22,10 @@ class ContinueInterviewNode(BaseNode):
             user_response = interrupt(interruption_interview_question)
             self._log_end(f"Interrupt resolved with answer: {user_response}")
 
-            # Add user's response to messages
-            updated_message = HumanMessage(content=user_response)
-
+            # Add the user's response to messages so the interviewer can process it
             return {
-                "messages": [updated_message],
+                "messages": [HumanMessage(content=user_response)],
+                "intruption_interview_question": "",
             }
         else:
             self._log_end("No interruption needed")

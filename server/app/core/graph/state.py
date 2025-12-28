@@ -4,6 +4,7 @@ from app.core.agent.model.interviewer_model import InterviewerModel
 from app.core.agent.model.interview_strategy_model import InterviewStrategy
 from app.core.agent.model.question_maker_model import QuestionSet
 from app.core.agent.model.evalutaion_model import InterviewEvaluation
+from app.core.agent.model.dynamic_prompt_model import Context
 
 
 class InterviewCoachState(MessagesState):
@@ -19,7 +20,8 @@ class InterviewCoachState(MessagesState):
         interview_output (InterviewerModel | None): The interview output.
         is_interview_completed (bool): Whether the interview has been completed.
         intruption_interview_question (str): The question that was interrupted.
-        interview_evaluation (InterviewEvaluation | None): The interview evaluation.
+        final_interview_evaluation (InterviewEvaluation | None): The final interview evaluation.
+        final_user_requirements (ReqGathringModel | None): The final user requirements.
     """
 
     requirements: ReqGathringModel | None = None
@@ -34,4 +36,8 @@ class InterviewCoachState(MessagesState):
     is_interview_completed: bool = False
     intruption_interview_question: str = ""
 
-    interview_evaluation: InterviewEvaluation | None = None
+    final_interview_evaluation: InterviewEvaluation | None = None
+
+    final_user_requirements: ReqGathringModel | None = None
+
+    context: Context | None = None

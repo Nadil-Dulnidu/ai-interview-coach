@@ -44,13 +44,10 @@ class InterviewStrategyNode(BaseNode):
             result = {
                 "messages": [
                     AIMessage(
-                        content="I have analyzed the requirements and developed a tailored interview strategy to help you prepare effectively. Let's proceed with the next steps of our session.\n\n"
+                        content="",
                     )
                 ],
                 "interview_strategy": structured_response.model_dump(),
-                "requirements": state["requirements"],
-                "requirements_completed": state["requirements_completed"],
-                "intruption_question": state["intruption_question"],
             }
 
             self._log_end("Interview strategy generated successfully")

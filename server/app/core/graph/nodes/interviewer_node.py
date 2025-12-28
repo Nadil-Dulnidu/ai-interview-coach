@@ -6,6 +6,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from typing import Any, Dict
 
 from tenacity import retry, stop_after_attempt, wait_exponential
+from app.core.agent.model.dynamic_prompt_model import Context
 
 
 class InterviewerNode(BaseNode):
@@ -21,25 +22,35 @@ class InterviewerNode(BaseNode):
         try:
             interview_questions = state["interview_questions"]
 
-            messages = [
-                HumanMessage(
-                    content=f"Here are the interview questions: {interview_questions}"
+            # Get the current interview state to track progress
+            interview_output = state.get("interview_output", None)
+
+            # Build the context message with questions and current state
+            if interview_output:
+                context_message = (
+                    f"Here are the interview questions: {interview_questions}\n\n"
+                    f"Current interview state (continue from here): {interview_output}"
                 )
-            ] + state["messages"]
+            else:
+                context_message = (
+                    f"Here are the interview questions: {interview_questions}"
+                )
 
-            response = self.agent.invoke({"messages": messages})
+            messages = [HumanMessage(content=context_message)] + state["messages"]
 
-            print(f"=====Interviewer Agent response========: {response["messages"]}")
+            response = self.agent.invoke(
+                {"messages": messages},
+                context=Context(
+                    user_name=state["context"].user_name,
+                    assistent_name=state["context"].assistent_name,
+                ),
+            )
 
             if not response:
                 self.logger.error("Empty response from agent")
                 raise AgentInvocationError("Empty response from agent")
 
             structured_response = response["structured_response"]
-
-            print(
-                f"=====Interviewer Agent structured response========: {structured_response}"
-            )
 
             # Check if we need more information
             if (
@@ -64,8 +75,9 @@ class InterviewerNode(BaseNode):
         self, state: InterviewCoachState, structured_response: Any
     ) -> Dict[str, Any]:
         return {
-            "is_interview_completed": False,
             "intruption_interview_question": structured_response.question,
+            "interview_output": structured_response.model_dump(),  # Save progress
+            "is_interview_completed": False,
         }
 
     def _create_complete_state(
@@ -74,7 +86,7 @@ class InterviewerNode(BaseNode):
         return {
             "messages": [
                 AIMessage(
-                    content="Thank you for completing the interview. I have successfully gathered all the necessary information and will now proceed with the evaluation of your responses.\n\n"
+                    content="\n\nThank you for completing the interview. I have successfully gathered all the necessary information and will now proceed with the evaluation of your responses.\n\n"
                 )
             ],
             "interview_output": structured_response.model_dump(),

@@ -9,6 +9,7 @@ from langgraph.types import interrupt
 
 from app.core.graph.state import InterviewCoachState
 from app.core.graph.nodes.base_node import BaseNode
+from langchain_core.messages import HumanMessage
 
 
 class AskMoreInfoNode(BaseNode):
@@ -50,19 +51,9 @@ class AskMoreInfoNode(BaseNode):
             user_response = interrupt(interruption_question)
             self._log_end(f"Interrupt resolved with answer: {user_response}")
 
-            # Add user's response to messages
-            from langchain_core.messages import HumanMessage
-
-            updated_messages = list(state["messages"]) + [
-                HumanMessage(content=user_response)
-            ]
-
             return {
-                "messages": updated_messages,
-                "requirements": state.get("requirements"),
-                "requirements_completed": state.get("requirements_completed", False),
+                "messages": [HumanMessage(content=user_response)],
                 "intruption_question": "",  # Clear the interrupt question
-                "interview_strategy": state.get("interview_strategy"),
             }
         else:
             self._log_end("No interruption needed")

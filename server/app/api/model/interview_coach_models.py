@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
+from app.core.agent.model.dynamic_prompt_model import Context
+
 
 class VercelChatRequest(BaseModel):
     """
@@ -12,4 +14,6 @@ class VercelChatRequest(BaseModel):
     messages: List[Dict[str, Any]]  # UI messages array
     trigger: str  # "submit-message" or other triggers
     thread_id: Optional[str] = None  # Optional override for thread_id
-    resume: Optional[bool] = False  # Whether resuming from interrupt
+    resume: Optional[bool] = False
+    user_name: str = ""
+    assistent_name: str = "" # Whether resuming from interrupt

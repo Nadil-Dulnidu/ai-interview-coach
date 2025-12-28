@@ -41,7 +41,7 @@ class QuestionMakerNode(BaseNode):
             result = {
                 "messages": [
                     AIMessage(
-                        content="I have analyzed the requirements and strategy to generate a tailored set of interview questions. I'm ready to begin the interview when you are.\n\n"
+                        content="\n\n",
                     )
                 ],
                 "interview_questions": structured_response.model_dump(),

@@ -15,13 +15,14 @@ from typing import AsyncGenerator
 from langchain_core.messages import HumanMessage
 from langgraph.types import Command
 
+from app.core.agent.model.dynamic_prompt_model import Context
 from app.core.graph.state import InterviewCoachState
 from app.core.graph_executer import compiled_graph as interview_coach_graph
 from app.util.vercel_adapter.langgraph_vercel_adapter import stream_langgraph_to_vercel
 
 
 async def stream_interview_coach_chat(
-    message: str, thread_id: str, resume: bool = False
+    message: str, thread_id: str, resume: bool = False, context: Context | None = None
 ) -> AsyncGenerator[str, None]:
     """
     Stream the travel system using the pluggable adapter.
@@ -47,7 +48,10 @@ async def stream_interview_coach_chat(
         initial_state = Command(resume=message)
     else:
         # Initial invocation
-        initial_state = InterviewCoachState(messages=[HumanMessage(content=message)])
+        initial_state = {
+            "messages": [HumanMessage(content=message)],
+            "context" : context
+        }
 
     # Stream using the pluggable adapter!
     # No need to specify stream_mode or graph-specific logic
@@ -56,7 +60,7 @@ async def stream_interview_coach_chat(
         graph=interview_coach_graph,
         initial_state=initial_state,
         config=config,
-        custom_data_fields=["requirements", "interview_evaluation"],
+        custom_data_fields=["final_user_requirements", "final_interview_evaluation"],
     ):
         yield event
 
@@ -71,12 +75,12 @@ async def stream_interview_coach_with_custom_extractor(
     This could be useful if you want to extract messages from a specific
     field or combine multiple fields into the conversational text.
     """
-    from app.utils.message_extractors import (
+    from app.util.vercel_adapter.message_extractors import (
         MessageExtractorChain,
         summary_field_extractor,
         default_message_extractor,
     )
-    from app.utils.langgraph_vercel_adapter import LangGraphToVercelAdapter
+    from app.util.vercel_adapter.langgraph_vercel_adapter import LangGraphToVercelAdapter
 
     # Create custom extractor chain
     # Try summary field first, fallback to messages
@@ -90,7 +94,7 @@ async def stream_interview_coach_with_custom_extractor(
     # Create adapter with custom extractor and custom data fields
     adapter = LangGraphToVercelAdapter(
         message_extractor=extractor.extract,
-        custom_data_fields=["requirements", "interview_evaluation"],
+        custom_data_fields=["final_user_requirements", "final_interview_evaluation"],
     )
 
     config = {"configurable": {"thread_id": thread_id}}

@@ -1,6 +1,7 @@
 from app.core.graph.state import InterviewCoachState
 from app.core.graph.nodes.base_node import BaseNode
 from langchain_core.messages import HumanMessage, AIMessage
+from app.exceptions.graph_exceptions import AgentInvocationError
 from typing import Any
 
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -38,10 +39,12 @@ class EvaluationNode(BaseNode):
             result = {
                 "messages": [
                     AIMessage(
-                        content="I have completed the evaluation of the interview output based on the provided requirements. The assessment includes a detailed analysis of the performance, highlighting key strengths and areas for improvement.\n\n"
+                        content="\n\nI have completed the evaluation of the interview output based on the provided requirements. The assessment includes a detailed analysis of the performance, highlighting key strengths and areas for improvement. Have a nice day.\n\n",
+                        name="interview_evaluation",
                     )
                 ],
-                "interview_evaluation": structured_response.model_dump(),
+                "final_user_requirements": state["requirements"],
+                "final_interview_evaluation": structured_response.model_dump(),
             }
 
             self._log_end("Interview evaluation generated successfully")

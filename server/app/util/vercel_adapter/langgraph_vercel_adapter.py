@@ -483,6 +483,7 @@ class LangGraphToVercelAdapter:
 
         try:
             chunk_count = 0
+            message_id = self._create_message_id()
             async for chunk in graph.astream(
                 initial_state,
                 config,
@@ -497,7 +498,7 @@ class LangGraphToVercelAdapter:
                 )
 
                 # chunk is the state dict itself
-                async for sse_event in self._handle_node_update(chunk):
+                async for sse_event in self._handle_node_update(chunk, message_id):
                     logger.info(f"[ADAPTER] Yielding SSE event: {sse_event[:100]}...")
                     yield sse_event
 
@@ -524,7 +525,9 @@ class LangGraphToVercelAdapter:
             )
             return
 
-    async def _handle_node_update(self, chunk: Dict[str, Any]) -> AsyncIterator[str]:
+    async def _handle_node_update(
+        self, chunk: Dict[str, Any], message_id: str | None = None
+    ) -> AsyncIterator[str]:
         """
         Process state from astream(stream_mode="values").
 
@@ -544,7 +547,7 @@ class LangGraphToVercelAdapter:
         if "__interrupt__" in state:
             print(f"[STATE] Interrupt detected")
             logger.info(f"[STATE] Interrupt detected")
-            async for sse_event in self._handle_interrupt(state):
+            async for sse_event in self._handle_interrupt(state, message_id):
                 yield sse_event
             return  # Stop processing after interrupt
 
@@ -646,7 +649,7 @@ class LangGraphToVercelAdapter:
                     logger.info(f"[STATE] Content preview: {content[:100]}")
 
                 # Create unique message ID for this message
-                message_id = self._create_message_id()
+                # message_id = self._create_message_id()
                 print(f"[STATE] Streaming message with ID: {message_id}")
                 logger.info(f"[STATE] Streaming message with ID: {message_id}")
 
@@ -757,7 +760,7 @@ class LangGraphToVercelAdapter:
                 )
 
     async def _handle_interrupt(
-        self, state_update: Dict[str, Any]
+        self, state_update: Dict[str, Any], message_id: str | None = None
     ) -> AsyncIterator[str]:
         """
         Handle graph interruption (human-in-the-loop).
@@ -803,7 +806,7 @@ class LangGraphToVercelAdapter:
 
         # Stream the interrupt message as text events (so frontend displays it)
         if interrupt_message:
-            message_id = self._create_message_id()
+            # message_id = self._create_message_id()
             print(f"[INTERRUPT] Streaming interrupt message with ID: {message_id}")
             logger.info(
                 f"[INTERRUPT] Streaming interrupt message with ID: {message_id}"

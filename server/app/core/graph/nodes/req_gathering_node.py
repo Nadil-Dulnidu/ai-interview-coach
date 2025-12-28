@@ -14,6 +14,7 @@ from app.core.graph.state import InterviewCoachState
 from app.core.graph.nodes.base_node import BaseNode
 from app.exceptions.graph_exceptions import AgentInvocationError
 from langchain_core.messages import AIMessage
+from app.core.agent.model.dynamic_prompt_model import Context
 
 
 class RequirementGatheringNode(BaseNode):
@@ -59,7 +60,8 @@ class RequirementGatheringNode(BaseNode):
 
         try:
             messages = state["messages"]
-            response = self.agent.invoke({"messages": messages})
+            response = self.agent.invoke({"messages": messages}, 
+            context=Context(user_name=state["context"].user_name, assistent_name=state["context"].assistent_name))
 
             if not response:
                 self.logger.error("Empty response from agent")
@@ -97,9 +99,6 @@ class RequirementGatheringNode(BaseNode):
             State with interruption question set.
         """
         return {
-            "messages": state["messages"],
-            "requirements": None,
-            "requirements_completed": False,
             "intruption_question": structured_response.missing_info.question,
         }
 
@@ -119,7 +118,8 @@ class RequirementGatheringNode(BaseNode):
         return {
             "messages": [
                 AIMessage(
-                    content="I have successfully gathered all the necessary information. We are now ready to proceed with your interview practice session."
+                    content="I have successfully gathered all the necessary information. We are now ready to proceed with your interview practice session.\n\n Please wait...",
+                    name="requirements",
                 )
             ],
             "requirements": structured_response.model_dump(),

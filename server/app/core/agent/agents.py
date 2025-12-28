@@ -5,6 +5,7 @@ with comprehensive error handling, logging, and retry mechanisms.
 
 import logging
 import threading
+from tokenize import OP
 from typing import Any, Callable, Optional, Sequence
 
 from tenacity import (
@@ -25,11 +26,12 @@ from app.core.llm.openai_llm import get_openai_model
 from app.core.llm.genai_llm import get_genai_model
 from app.core.llm.openai_resoning_llm import get_openai_reasoning_model
 from app.core.agent.model.req_gathring_model import ReqGathringModel
-from app.core.agent.prompt.req_gathering import REQ_GATHERING_PROMPT
+from app.core.agent.model.dynamic_prompt_model import Context
 from app.core.agent.prompt.interview_strategy import INTERVIEW_STRATEGY_PROMPT
-from app.core.agent.prompt.interviewer import INTERVIEWER_PROMPT
 from app.core.agent.prompt.question_maker import QUESTION_MAKER_PROMPT
 from app.core.agent.prompt.evaluation import EVALUATION_PROMPT
+from app.core.agent.middleware.req_gathering import dynamic_req_gathering_agent_prompt
+from app.core.agent.middleware.interviewer import dynamic_interviewer_agent_prompt
 from app.core.agent.model.interviewer_model import InterviewerModel
 from app.core.agent.model.interview_strategy_model import InterviewStrategy
 from app.core.agent.model.question_maker_model import QuestionSet
@@ -59,7 +61,9 @@ class Agent:
         name: Optional[str] = None,
         tools: Optional[Sequence[BaseTool | Callable | dict[str, Any]]] = None,
         prompt: Optional[str] = None,
+        middleware: Optional[Sequence[Callable | dict[str, Any]]] = None,
         response_format: Optional[BaseModel] = None,
+        context_schema: Optional[Any] = None
     ):
         """
         Initialize an Agent.
@@ -74,13 +78,15 @@ class Agent:
         Raises:
             AgentConfigurationError: If required parameters are missing
         """
-        self._validate_config(model, name, prompt, response_format)
+        self._validate_config(model, name, response_format)
 
         self.name = name
         self.response_format = response_format
         self.model = model
         self.tools = tools or []
         self.prompt = prompt
+        self.middleware = middleware or []
+        self.context_schema = context_schema
 
         logger.info(f"Agent '{self.name}' initialized with {len(self.tools)} tools")
 
@@ -88,7 +94,6 @@ class Agent:
         self,
         model: Optional[ChatOpenAI],
         name: Optional[str],
-        prompt: Optional[str],
         response_format: Optional[BaseModel],
     ) -> None:
         """Validate agent configuration."""
@@ -96,8 +101,6 @@ class Agent:
             raise AgentConfigurationError("Model is required")
         if not name:
             raise AgentConfigurationError("Agent name is required")
-        if not prompt:
-            raise AgentConfigurationError("System prompt is required")
         if not response_format:
             raise AgentConfigurationError("Response format is required")
 
@@ -126,6 +129,8 @@ class Agent:
                 response_format=ToolStrategy(self.response_format),
                 system_prompt=self.prompt,
                 name=self.name,
+                middleware=self.middleware,
+                context_schema=self.context_schema
             )
             logger.info(f"Agent '{self.name}' created successfully")
             return agent
@@ -242,8 +247,10 @@ class AgentManager:
                             model=self._get_openai_model(),
                             name="requirement_gathering_agent",
                             tools=[],
-                            prompt=REQ_GATHERING_PROMPT,
+                            prompt="",
                             response_format=ReqGathringModel,
+                            middleware=[dynamic_req_gathering_agent_prompt],
+                            context_schema=Context
                         ).create_agent()
                         logger.info("Requirement gathering agent created successfully")
                     except Exception as e:
@@ -330,8 +337,10 @@ class AgentManager:
                             model=self._get_openai_model(),
                             name="interviewer_agent",
                             tools=[],
-                            prompt=INTERVIEWER_PROMPT,
+                            prompt="",
                             response_format=InterviewerModel,
+                            middleware=[dynamic_interviewer_agent_prompt],
+                            context_schema=Context
                         ).create_agent()
                         logger.info("Interviewer agent created successfully")
                     except Exception as e:

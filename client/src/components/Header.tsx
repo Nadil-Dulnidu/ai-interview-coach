@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 
 const Header = () => {
   return (
-    <div className="mb-6 flex justify-between">
-      <h1 className="text-2xl font-bold">AI Interview Coach</h1>
-      <div>
+    <div className="mb-4 flex justify-between">
+      <h1 className="text-2xl font-bold">InterviewIQ</h1>
+      <div className="flex items-center">
         <SignedIn>
           <UserButton
             appearance={{

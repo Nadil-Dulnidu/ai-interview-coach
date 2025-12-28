@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, ToolUIPart } from "ai";
 import { nanoid } from "nanoid";
@@ -46,26 +46,61 @@ function ChatApp() {
 
   const { user } = useUser();
 
-  const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: `${process.env.BACKEND_URL}/travel-system/chat`,
-      body: {
-        thread_id: threadId,
-        resume: isInterrupted,
-      },
-    }),
-    // Note: messageMetadata is a custom property from our server
-    onFinish: (data: { messageMetadata?: { interrupt?: boolean; interruptMessage?: string } } & Record<string, unknown>) => {
-      const { messageMetadata } = data;
+  // Use a ref to store the interrupt state - this avoids closure issues
+  // The ref always contains the current value and can be safely accessed in callbacks
+  const isInterruptedRef = useRef(isInterrupted);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    isInterruptedRef.current = isInterrupted;
+  }, [isInterrupted]);
+
+  // Create transport once - the body function reads from ref to get current value
+  // Note: ESLint warns about ref access, but this is a false positive.
+  // We're not accessing the ref during render - we're defining a callback that accesses it later.
+  /* eslint-disable */
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: `http://localhost:8001/interview-coach/chat`,
+        body: () => {
+          // Access ref in callback (safe to do, not during render)
+          const currentResumeValue = isInterruptedRef.current;
+          return {
+            thread_id: threadId,
+            resume: currentResumeValue,
+            user_name: user?.firstName || "",
+            assistent_name: "InterviewIQ",
+          };
+        },
+      }),
+    [threadId] // Only recreate if threadId changes
+  );
+  // Memoize onFinish to prevent recreating on every render
+  const handleFinish = useCallback(
+    (
+      data: {
+        messageMetadata?: { interrupt?: boolean; interruptMessage?: string };
+        finishReason?: string;
+      } & Record<string, unknown>
+    ) => {
+      const { messageMetadata, finishReason } = data;
+
       // Check if this is an interrupt
-      if (messageMetadata?.interrupt) {
+      if (finishReason === undefined || finishReason === "interrupt") {
         setIsInterrupted(true);
-        setInterruptMessage(messageMetadata.interruptMessage || "");
-      } else {
+        setInterruptMessage(messageMetadata?.interruptMessage || "Please provide the requested information...");
+      } else if (finishReason === "stop" || finishReason === "length" || finishReason === "content-filter") {
         setIsInterrupted(false);
         setInterruptMessage("");
       }
     },
+    [] // Empty deps - setIsInterrupted and setInterruptMessage are stable
+  );
+
+  const { messages, sendMessage, status } = useChat({
+    transport,
+    onFinish: handleFinish,
   });
 
   const handleSubmit = (message: { text: string }) => {
@@ -73,6 +108,7 @@ function ChatApp() {
       return;
     }
 
+    // Send the message - the transport will use the current isInterrupted value
     sendMessage({
       text: message.text.trim(),
     });
@@ -122,7 +158,12 @@ function ChatApp() {
       const dataPart = part as DataPart;
       const dataType = dataPart.type.slice(5); // Remove 'data-' prefix
 
-      if (dataType === "requirements" && dataPart.data) {
+      // Handle interrupt data (don't render, it's handled in useEffect)
+      if (dataType === "interrupt") {
+        return null; // Don't render interrupt data parts
+      }
+
+      if (dataType === "final_user_requirements" && dataPart.data) {
         return (
           <div key={`${messageId}-${index}`} className="my-4">
             <InterviewRequirements requirements={dataPart.data as unknown as ReqGathringModel} />
@@ -130,7 +171,7 @@ function ChatApp() {
         );
       }
 
-      if (dataType === "evaluation" && dataPart.data) {
+      if (dataType === "final_interview_evaluation" && dataPart.data) {
         return (
           <div key={`${messageId}-${index}`} className="my-4">
             <InterviewEvaluation evaluation={dataPart.data as unknown as InterviewEvaluationType} />
@@ -143,20 +184,20 @@ function ChatApp() {
   };
 
   return (
-    <div className="mx-auto h-screen p-6 relative container">
+    <div className="mx-auto h-screen px-6 py-4 relative container overflow-hidden">
       <div className="h-full flex flex-col">
         {/* Header */}
         <Header />
         {/* chat body */}
-        <div className="flex flex-col flex-1 w-full max-w-4xl mx-auto">
+        <div className="flex flex-col flex-1 min-h-0 w-full max-w-4xl mx-auto ">
           {/* Conversation Area */}
-          <Conversation className="flex-1 text-lg ">
+          <Conversation className="flex-1 text-lg flow min-h-0 scrollbar-thin">
             <ConversationContent>
               {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full gap-6">
                   <div className="text-center space-y-2">
                     {isSignedIn && isLoaded ? (
-                      <Greeting name={user?.firstName || "User"} className="text-3xl" showIcon={true} />
+                      <Greeting name={user?.firstName || "User"} className="text-3xl" showIcon={false} />
                     ) : (
                       <p className="text-3xl font-bold tracking-tight">Master your next interview.</p>
                     )}
@@ -198,7 +239,7 @@ function ChatApp() {
 
           {/* Suggestions (only show when no messages) */}
           {messages.length === 0 && (
-            <Suggestions className="mb-4">
+            <Suggestions className="mb-4 shrink-0">
               <Suggestion onClick={() => handleSuggestionClick("I have a interview for Intern AI Engineer position")} suggestion="Intern AI Engineer position interview" />
               <Suggestion onClick={() => handleSuggestionClick("Can you help me prepare for a behavioral interview?")} suggestion="Behavioral interview prep" />
               <Suggestion onClick={() => handleSuggestionClick("I'd like to do a mock interview for a Software Engineering position")} suggestion="Software Engineer mock interview" />
@@ -206,7 +247,7 @@ function ChatApp() {
           )}
 
           {/* Input Area */}
-          <PromptInput onSubmit={handleSubmit} className="mt-4">
+          <PromptInput onSubmit={handleSubmit} className="mt-4 shrink-0">
             {/* Textarea */}
             <PromptInputBody>
               <PromptInputTextarea

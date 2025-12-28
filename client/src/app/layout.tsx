@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AI Interview Coach",
+  title: "InterviewIQ",
   description: "AI powered interview preparation assistant",
 };
 

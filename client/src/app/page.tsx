@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo} from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, ToolUIPart } from "ai";
 import { nanoid } from "nanoid";
@@ -15,6 +15,7 @@ import { InterviewEvaluation, type InterviewEvaluation as InterviewEvaluationTyp
 import Greeting from "@/components/Greeting";
 import Header from "@/components/Header";
 import { useUser, useAuth } from "@clerk/nextjs";
+import { BACKEND_URL } from "@/config/env";
 
 // Type definitions for message parts
 type TextPart = {
@@ -42,8 +43,7 @@ function ChatApp() {
   const [threadId] = useState(() => nanoid());
   const [isInterrupted, setIsInterrupted] = useState(false);
   const [interruptMessage, setInterruptMessage] = useState("");
-  const { isSignedIn, isLoaded } = useAuth();
-
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   const { user } = useUser();
 
   // Use a ref to store the interrupt state - this avoids closure issues
@@ -54,7 +54,7 @@ function ChatApp() {
   useEffect(() => {
     isInterruptedRef.current = isInterrupted;
   }, [isInterrupted]);
-
+  
   // Create transport once - the body function reads from ref to get current value
   // Note: ESLint warns about ref access, but this is a false positive.
   // We're not accessing the ref during render - we're defining a callback that accesses it later.
@@ -62,7 +62,13 @@ function ChatApp() {
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
-        api: `http://localhost:8001/interview-coach/chat`,
+        api: `${BACKEND_URL}/interview-coach/chat`,
+        headers: async () => {
+          const token = await getToken({ template: "interviewiq" });
+          return {
+            Authorization: `Bearer ${token}`,
+          };
+        },
         body: () => {
           // Access ref in callback (safe to do, not during render)
           const currentResumeValue = isInterruptedRef.current;
@@ -199,7 +205,7 @@ function ChatApp() {
                     {isSignedIn && isLoaded ? (
                       <Greeting name={user?.firstName || "User"} className="text-3xl" showIcon={false} />
                     ) : (
-                      <p className="text-3xl font-bold tracking-tight">Master your next interview.</p>
+                      <p className="text-3xl font-semibold tracking-tight">Master your next interview.</p>
                     )}
                     <p className="text-muted-foreground">Practice behavioral and technical questions with personalized feedback from your AI coach.</p>
                   </div>
@@ -238,7 +244,7 @@ function ChatApp() {
           </Conversation>
 
           {/* Suggestions (only show when no messages) */}
-          {messages.length === 0 && (
+          {(messages.length === 0 && isSignedIn) && (
             <Suggestions className="mb-4 shrink-0">
               <Suggestion onClick={() => handleSuggestionClick("I have a interview for Intern AI Engineer position")} suggestion="Intern AI Engineer position interview" />
               <Suggestion onClick={() => handleSuggestionClick("Can you help me prepare for a behavioral interview?")} suggestion="Behavioral interview prep" />
@@ -259,7 +265,7 @@ function ChatApp() {
 
             {/* Footer with Submit Button */}
             <PromptInputFooter>
-              <PromptInputSubmit disabled={!input} status={status} />
+              <PromptInputSubmit disabled={!input || !isSignedIn} status={status} size={"sm"} />
             </PromptInputFooter>
           </PromptInput>
         </div>

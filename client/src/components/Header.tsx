@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 const Header = () => {
   return (
-    <div className="mb-4 flex justify-between">
+    <div className="pb-4 flex justify-between">
       <h1 className="text-2xl font-bold">InterviewIQ</h1>
       <div className="flex items-center">
         <SignedIn>
@@ -21,7 +21,7 @@ const Header = () => {
               baseTheme: dark,
             }}
           >
-            <Button variant="default" className="font-semibold">
+            <Button variant="default" className="font-semibold pointer-events-auto">
               Sign in
             </Button>
           </SignInButton>

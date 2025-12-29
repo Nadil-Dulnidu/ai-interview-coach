@@ -118,7 +118,7 @@ class RequirementGatheringNode(BaseNode):
         return {
             "messages": [
                 AIMessage(
-                    content="I have successfully gathered all the necessary information. We are now ready to proceed with your interview practice session.\n\n Please wait...",
+                    content="I have successfully gathered all the necessary information. We are now ready to proceed with your interview practice session.\n\n Please wait...\n\n",
                     name="requirements",
                 )
             ],

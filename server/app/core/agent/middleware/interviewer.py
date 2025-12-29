@@ -1,5 +1,6 @@
 from langchain.agents.middleware import dynamic_prompt, ModelRequest
 
+
 @dynamic_prompt
 def dynamic_interviewer_agent_prompt(request: ModelRequest) -> str:
     user_name = request.runtime.context.user_name
@@ -53,24 +54,6 @@ def dynamic_interviewer_agent_prompt(request: ModelRequest) -> str:
     - Track the questions that the user has not answered yet
     - When the user answers:
       - Remove the question from the missing_user_answer_questions list
-
-    ━━━━━━━━━━━━━━━━━━━━━━
-    OUTPUT FORMAT (STRICT — Pydantic Safe)
-    ━━━━━━━━━━━━━━━━━━━━━━
-    You MUST return data strictly in the following structure:
-
-    InterviewerModel:
-    {
-      "is_candidate_ready": bool,
-      "user_response": [
-        {
-          "question_id": "",
-          "question": "",
-          "user_answer": ""
-        }
-      ],
-      "current_question": ""
-    }
 
     Rules:
     - `user_response` must contain ONLY answered questions

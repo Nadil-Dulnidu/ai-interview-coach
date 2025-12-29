@@ -42,7 +42,7 @@ async def stream_interview_coach_chat(
     Yields:
         SSE-formatted strings following Vercel Data Stream Protocol
     """
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 100}
 
     checkpointer = await get_postgres_checkpointer()
     interview_coach_graph = get_compiled_graph(checkpointer=checkpointer)

@@ -63,7 +63,7 @@ class Agent:
         prompt: Optional[str] = None,
         middleware: Optional[Sequence[Callable | dict[str, Any]]] = None,
         response_format: Optional[BaseModel] = None,
-        context_schema: Optional[Any] = None
+        context_schema: Optional[Any] = None,
     ):
         """
         Initialize an Agent.
@@ -130,7 +130,7 @@ class Agent:
                 system_prompt=self.prompt,
                 name=self.name,
                 middleware=self.middleware,
-                context_schema=self.context_schema
+                context_schema=self.context_schema,
             )
             logger.info(f"Agent '{self.name}' created successfully")
             return agent
@@ -250,7 +250,7 @@ class AgentManager:
                             prompt="",
                             response_format=ReqGathringModel,
                             middleware=[dynamic_req_gathering_agent_prompt],
-                            context_schema=Context
+                            context_schema=Context,
                         ).create_agent()
                         logger.info("Requirement gathering agent created successfully")
                     except Exception as e:
@@ -340,7 +340,7 @@ class AgentManager:
                             prompt="",
                             response_format=InterviewerModel,
                             middleware=[dynamic_interviewer_agent_prompt],
-                            context_schema=Context
+                            context_schema=Context,
                         ).create_agent()
                         logger.info("Interviewer agent created successfully")
                     except Exception as e:

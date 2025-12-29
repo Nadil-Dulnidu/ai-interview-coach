@@ -5,14 +5,17 @@ from app.api.service.streaming_service import stream_interview_coach_chat
 from app.core.agent.model.dynamic_prompt_model import Context
 from app.util.vercel_adapter.http_headers import patch_vercel_headers
 from app.util.vercel_adapter.message_transformer import extract_user_message
+import logging
 from app.api.security.auth import verify_clerk_token
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
+
 
 @router.post("/chat")
 async def interview_coach_chat_streaming(
-    request: VercelChatRequest, token=Depends(verify_clerk_token)
+    request: VercelChatRequest, token_data=Depends(verify_clerk_token)
 ):
     """
     Streaming chat endpoint using the pluggable LangGraph-to-Vercel adapter.
@@ -36,11 +39,12 @@ async def interview_coach_chat_streaming(
 
     # Use thread_id from body if provided, otherwise use conversation id
     thread_id = request.thread_id or request.id
-    print(f"Thread ID: {thread_id}")
 
     context = Context(
         user_name=request.user_name, assistent_name=request.assistent_name
     )
+    
+    logger.info(f"Received interview coach chat request: thread_id={thread_id}, user_name={request.user_name}")
 
     response = StreamingResponse(
         stream_interview_coach_chat(

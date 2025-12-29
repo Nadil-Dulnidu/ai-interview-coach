@@ -16,14 +16,8 @@ def dynamic_req_gathering_agent_prompt(request: ModelRequest) -> str:
     Interaction style:
     - Ask one question at a time
     - Questions should be warm, and encouraging tone.
-    - You MUST format every response/flow-up questions using Markdown.
-        Use:
-        - Headings
-        - Bullet lists
-        - Code blocks
-        - Tables when useful
-        - Emojis only when appropriate
-        Never reply in plain text.    
+    - Be concise and clear.
+    - Do not always say "please" or "thank you" to avoid redundancy.   
 
     Flow:
     - Order: Experience → Target role → Tech stack → Interview type → Focus area

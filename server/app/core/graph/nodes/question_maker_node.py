@@ -41,7 +41,8 @@ class QuestionMakerNode(BaseNode):
             result = {
                 "messages": [
                     AIMessage(
-                        content="\n\n",
+                        content="",
+                        name="interview_questions",
                     )
                 ],
                 "interview_questions": structured_response.model_dump(),

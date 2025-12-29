@@ -22,8 +22,19 @@ class InterviewerNode(BaseNode):
         try:
             interview_questions = state["interview_questions"]
 
+            # Get the current interview state to track progress
+            interview_output = state.get("interview_output", None)
+
             # Build the context message with questions and current state
-            context_message = f"Here are the interview questions: {interview_questions}"
+            if interview_output:
+                context_message = (
+                    f"Here are the interview questions: {interview_questions}\n\n"
+                    f"Current interview state (continue from here): {interview_output}"
+                )
+            else:
+                context_message = (
+                    f"Here are the interview questions: {interview_questions}"
+                )
 
             messages = [HumanMessage(content=context_message)] + state["messages"]
 
@@ -65,6 +76,8 @@ class InterviewerNode(BaseNode):
     ) -> Dict[str, Any]:
         return {
             "intruption_interview_question": structured_response.question,
+            "interview_output": structured_response.model_dump(),  # Save progress
+            "is_interview_completed": False,
         }
 
     def _create_complete_state(

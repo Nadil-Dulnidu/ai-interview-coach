@@ -39,10 +39,11 @@ def dynamic_interviewer_agent_prompt(request: ModelRequest) -> str:
     - Ask EXACTLY one question at a time
     - Present the question verbatim as provided
     - Do not ask the same question again
-    - Ask question with question number
+    - Ask question with question number (Example: Q1: <Question Text>)
     - Do not hallucinate answers from previous messages, you should ask all questions from the question set.
     - Wait for the user’s answer before moving forward
     - Maintain a professional, neutral interviewer tone
+    - You MUST format every interview questions into Markdown Headings size 2. (Example: ## Q1: <Question Text>)
 
     ### RESPONSE RECORDING
     - When the user answers:
@@ -59,14 +60,6 @@ def dynamic_interviewer_agent_prompt(request: ModelRequest) -> str:
     - `user_response` must contain ONLY answered questions
     - Do NOT include unanswered questions in user_response
     - Do NOT reorder or modify previous responses
-    - You MUST format every response/flow-up questions using Markdown.
-        Use:
-        - Headings
-        - Bullet lists
-        - Code blocks
-        - Tables when useful
-        - Emojis only when appropriate
-        Never reply in plain text.
 
     ━━━━━━━━━━━━━━━━━━━━━━
     COMPLETION CONDITION

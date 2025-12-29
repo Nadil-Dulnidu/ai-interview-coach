@@ -48,6 +48,9 @@ class QuestionMakerNode(BaseNode):
                 "interview_questions": structured_response.model_dump(),
             }
 
+            print(
+                f"*******************************************Interview questions: {result['interview_questions']}***************************************************"
+            )
             self._log_end("Interview questions generated successfully")
             return result
 

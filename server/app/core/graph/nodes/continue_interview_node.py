@@ -19,7 +19,7 @@ class ContinueInterviewNode(BaseNode):
                 f"Triggering interrupt with question: {interruption_interview_question}"
             )
             # interrupt() pauses execution and returns the resume value
-            user_response = interrupt(interruption_interview_question)
+            user_response = interrupt(f"\n\n{interruption_interview_question}")
             self._log_end(f"Interrupt resolved with answer: {user_response}")
 
             # Add the user's response to messages so the interviewer can process it

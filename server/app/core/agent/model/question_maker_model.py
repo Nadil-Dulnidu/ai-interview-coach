@@ -7,7 +7,7 @@ class Question(BaseModel):
     Question for the interview
     """
 
-    question_id: str = Field(..., description="Question id")
+    question_number: str = Field(..., description="Question number")
     question: str = Field(..., description="Question for the interview")
     expected_answer: str = Field(..., description="Expected answer for the question")
 

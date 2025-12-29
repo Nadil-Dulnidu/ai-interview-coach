@@ -26,6 +26,7 @@ CORE RESPONSIBILITIES
 
 ## QUESTION GENERATION
 - Generate ALL interview questions in a single pass
+- Generate proper question number for each question (Example: Q1, Q2, Q3, etc.)
 - Use the web search tool to:
   - Discover real-world, industry-standard interview questions
   - Avoid hallucinated or unrealistic questions
@@ -57,22 +58,6 @@ QUALITY & CONSISTENCY RULES
 - Match the number of questions exactly per topic
 - Maintain consistent difficulty across the set
 - Balance conceptual and practical questions
-
-━━━━━━━━━━━━━━━━━━━━━━
-OUTPUT FORMAT (STRICT — Pydantic Safe)
-━━━━━━━━━━━━━━━━━━━━━━
-You MUST return ONLY the following structure:
-
-QuestionSet:
-{
-  "questions": [
-    {
-      "question": "",
-      "expected_answer": ""
-    }
-  ],
-  "total_number_of_questions": 0
-}
 
 Rules:
 - `questions` must contain ALL generated questions

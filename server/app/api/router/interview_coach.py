@@ -5,7 +5,7 @@ from app.api.service.streaming_service import stream_interview_coach_chat
 from app.core.agent.model.dynamic_prompt_model import Context
 from app.util.vercel_adapter.http_headers import patch_vercel_headers
 from app.util.vercel_adapter.message_transformer import extract_user_message
-from app.security.auth import verify_clerk_token
+from app.api.security.auth import verify_clerk_token
 
 router = APIRouter()
 

@@ -1,5 +1,5 @@
-import jwt
-from jwt.exceptions import InvalidTokenError
+from jose import jwt
+from jose.exceptions import JWTError
 from fastapi import HTTPException, Request, status
 import httpx
 from app.config.env_config import get_settings
@@ -26,7 +26,8 @@ async def verify_clerk_token(request: Request):
 
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing token"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing token",
         )
 
     token = auth_header.replace("Bearer ", "")
@@ -41,7 +42,7 @@ async def verify_clerk_token(request: Request):
             issuer=CLERK_ISSUER,
             options={"verify_aud": False},
         )
-    except InvalidTokenError:
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
         )

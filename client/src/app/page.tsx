@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo} from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, ToolUIPart } from "ai";
 import { nanoid } from "nanoid";
@@ -54,7 +54,7 @@ function ChatApp() {
   useEffect(() => {
     isInterruptedRef.current = isInterrupted;
   }, [isInterrupted]);
-  
+
   // Create transport once - the body function reads from ref to get current value
   // Note: ESLint warns about ref access, but this is a false positive.
   // We're not accessing the ref during render - we're defining a callback that accesses it later.
@@ -72,15 +72,16 @@ function ChatApp() {
         body: () => {
           // Access ref in callback (safe to do, not during render)
           const currentResumeValue = isInterruptedRef.current;
+          const user_name = user?.firstName || "Nadil";
           return {
             thread_id: threadId,
             resume: currentResumeValue,
-            user_name: user?.firstName || "",
+            user_name,
             assistent_name: "InterviewIQ",
           };
         },
       }),
-    [threadId] // Only recreate if threadId changes
+    [threadId, user] // Only recreate if threadId changes
   );
   // Memoize onFinish to prevent recreating on every render
   const handleFinish = useCallback(
@@ -244,7 +245,7 @@ function ChatApp() {
           </Conversation>
 
           {/* Suggestions (only show when no messages) */}
-          {(messages.length === 0 && isSignedIn) && (
+          {messages.length === 0 && isSignedIn && (
             <Suggestions className="mb-4 shrink-0">
               <Suggestion onClick={() => handleSuggestionClick("I have a interview for Intern AI Engineer position")} suggestion="Intern AI Engineer position interview" />
               <Suggestion onClick={() => handleSuggestionClick("Can you help me prepare for a behavioral interview?")} suggestion="Behavioral interview prep" />

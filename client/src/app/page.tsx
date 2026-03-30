@@ -81,7 +81,7 @@ function ChatApp() {
           };
         },
       }),
-    [threadId, user] // Only recreate if threadId changes
+    [threadId, user]
   );
   // Memoize onFinish to prevent recreating on every render
   const handleFinish = useCallback(

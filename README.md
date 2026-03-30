@@ -14,7 +14,7 @@ The system employs multiple specialized AI agents working in concert to create a
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 ### 🤖 **Intelligent Multi-Agent System**
 - **Requirement Gathering Agent**: Collects candidate information, role details, and interview preferences
